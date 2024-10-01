@@ -1,9 +1,1 @@
-# A app Flet app
-
-An example of a counter Flet app.
-
-To run the app:
-
-```
-flet run [app_directory]
-```
+App para llevar un registro de inventario en una tienda
