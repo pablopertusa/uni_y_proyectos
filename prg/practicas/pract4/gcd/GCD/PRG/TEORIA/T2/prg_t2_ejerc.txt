@@ -1,0 +1,7 @@
+gcd
+gcd prg
+gcd prg teoria
+gcd prg teoria t2
+gcd prg teoria t2 prg_t2_ejerc
+
+

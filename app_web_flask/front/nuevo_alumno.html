@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Alumno</title>
+    <style>
+        @font-face {
+            font-family:'montserrat';
+            src: url('http://127.0.0.1:5001/front/fonts/Montserrat/static/Montserrat-BoldItalic.ttf') format('truetype');
+                
+            font-style: normal;
+            font-weight: normal;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            align-content: center;
+            align-self: center;
+        }
+        form {
+            font-family: montserrat;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            align-self: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 23px;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+        select {
+            width: 100px;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            align-self: center;
+        }
+        #fechaNacimiento {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #nombre {
+            padding: 8px;
+            width: 800px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #submitButton {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            align-self: center;
+        }
+
+        #tituloFormulario {
+            font-family: montserrat;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="tituloFormulario">Formulario de Alumno</h1>
+
+    <form id="miFormulario" action="http://127.0.0.1:5001/alumno/procesar_formulario" method="post" onsubmit="return envioFormulario()", autocomplete="off">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre" placeholder="Introduce nombre" required>
+
+        <label for="FechaNacimiento">Fecha nacimiento:</label>
+        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
+
+        <label for="sexo">Sexo:</label>
+        <select id="sexo" name="sexo" required>
+            <option value="masculino">Masculino</option>
+            <option value="femenino">Femenino</option>
+        </select>
+        <input id="submitButton" type="submit" value="Enviar">
+    </form>
+    <script>
+        function envioFormulario() {
+            alert('Formulario enviado correctamente')
+            return true
+        } 
+    </script>
+</body>
+</html>

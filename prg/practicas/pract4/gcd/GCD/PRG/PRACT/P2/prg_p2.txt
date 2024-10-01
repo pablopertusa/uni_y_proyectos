@@ -1,0 +1,4 @@
+gcd
+gcd prg
+gcd prg p2
+gcd prg p2 prg_p2

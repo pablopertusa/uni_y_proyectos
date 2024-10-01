@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://127.0.0.1:5000/front/styles.css">
+    <title>TenisStatsHub</title>
+</head>
+<body>
+    <div>
+        <h1 class="main_title">TenisStatsHub</h1>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Nombre del Jugador" oninput="buscarAutocompletado()">
+    <div class="autocomplete" id="autocomplete"></div>
+    <button id="searchButton" onclick="buscarJugador()"><img src="http://127.0.0.1:5000/front/images/lupa.png" width="10" height="10" alt="Buscar"></button>
+
+    <div id="playerInfo"></div>
+
+    <script src="http://127.0.0.1:5000/front/script.js"></script>
+</body>
+
+<footer>
+    <p>&copy; 2024 TenisStatsHub. Absolutamente todos los derechos reservados.</p>
+    <p>Síguenos en: <a href="https://twitter.com/TenisStatsHub" target="_blank">Twitter</a> | <a href="https://www.facebook.com/TenisStatsHub" target="_blank">Facebook</a></p>
+</footer>
+
+</html>

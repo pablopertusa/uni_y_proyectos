@@ -1,0 +1,1188 @@
+---
+title: "Análisis de Datos Energéticos Globales"
+date: "2024-06-02"
+output: word_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+## Índice 
+
+- [Introducción](#introducción) 
+
+- [Objetivos](#objetivos) 
+
+- [Limpieza y transformación](#limpieza-y-transformación) 
+
+- [Análisis PCA](#análisis-pca) 
+
+- [Análisis Clustering](#análisis-clustering) 
+
+- [Análisis PLS](#análisis-pls) 
+
+- [Conclusiones del Estudio](#conclusiones-del-estudio) 
+
+- [Anexos](#anexos) 
+
+
+
+
+## Introducción
+
+La interacción entre la economía, la población y las fuentes de energía de un país desempeña un papel crucial en el desarrollo sostenible y la política energética global. El conjunto de datos estudiado proporciona una visión de cómo distintos países aprovechan y gestionan la energía teniendo en cuenta sus características económicas y demográficas. Los datos analizados contienen distintas variables que detallan la producción y el uso de energía, así como aspectos económicos como el PIB, y la población para diversos países a lo largo de varios años.
+
+**Contexto del estudio:**   
+
+  
+
+La base de datos ha sido obtenida de github LINK . Esta tiene en origen 21591 observaciones de distintos países y regiones entre años variables 1900-2022, contiene 128 variables numéricas, y 2 categóricas que identifican el país.  
+
+Después de realizar el tratamiento y la limpieza de datos se ha llegado a un dataset con 24 variables numéricas y 1 categórica con 2028 observaciones en las que se encuentran los datos de los países más importantes económicamente con las observaciones desde el año 2000 hasta 2021, algunos datos se han imputado y se ha realizado una transformación logarítmica junto la division entre el numero de habitantes por país para cada variable numérica que no fuera año. El proceso se muestra en el Anexo A. 
+
+  
+
+Estas son las variables que contiene el dataset con la limpieza realizada: 
+
+  
+
+-**country**: País o región al que pertenecen los datos. (Variable Categórica) 
+
+-**year**: Año al que pertenecen los datos. (Variable Numérica) 
+
+-**population**: Población total del país o región. (Variable Numérica) 
+
+-**gdp**: Producto Interno Bruto total del país o región. (Variable Numérica) 
+
+-**carbon_intensity_elec**: Intensidad de carbono de la electricidad generada. (Variable Numérica) 
+
+-**coal_electricity**: Electricidad total generada por carbón. (Variable Numérica) 
+
+-**coal_production**: Producción total de carbón. (Variable Numérica) 
+
+-**electricity_demand**: Demanda total de electricidad. (Variable Numérica) 
+
+-**electricity_generation**: Generación total de electricidad. (Variable Numérica) 
+
+-**energy_per_gdp**: Consumo de energía por unidad de PIB. (Variable Numérica) 
+
+-**fossil_electricity**: Electricidad total generada por combustibles fósiles. (Variable Numérica) 
+
+-**gas_electricity**: Electricidad total generada por gas. (Variable Numérica) 
+
+-**gas_production**: Producción total de gas. (Variable Numérica) 
+
+-**greenhouse_gas_emissions**: Emisiones totales de gases de efecto invernadero. (Variable Numérica) 
+
+-**hydro_electricity**: Electricidad total generada por hidroeléctricas. (Variable Numérica) 
+
+-**net_elec_imports**: Total de importaciones netas de electricidad. (Variable Numérica) 
+
+-**nuclear_consumption**: Consumo total de energía nuclear. (Variable Numérica) 
+
+-**nuclear_electricity**: Electricidad total generada por energía nuclear. (Variable Numérica) 
+
+-**oil_electricity**: Electricidad total generada por petróleo. (Variable Numérica) 
+
+-**oil_production**: Producción total de petróleo. (Variable Numérica) 
+
+-**other_renewable_electricity**: Electricidad total generada por otras energías renovables (excluyendo biocombustibles). (Variable Numérica) 
+
+-**primary_energy_consumption**: Consumo total de energía primaria. (Variable Numérica) 
+
+-**renewables_electricity**: Electricidad total generada por energías renovables. (Variable Numérica) 
+
+-**solar_electricity**: Electricidad total generada por energía solar. (Variable Numérica) 
+
+-**wind_electricity**: Electricidad total generada por energía eólica. (Variable Numérica) 
+
+  
+
+## Objetivos
+
+El análisis de este conjunto de datos busca entender mejor cómo las variables económicas, demográficas y de producción energética interactúan y afectan el desarrollo y la sostenibilidad energética de los países. Por ello se ha realizado un PCA, un clustering y un modelo PLS. 
+
+
+## Limpieza y transformación
+
+Tal y como se muestra en el anexo A comenzamos con muchas observaciones con poca información, por lo que nos centramos en seleccionar las observaciones a partir del 2000 y de los países más importantes. Tras esto, seleccionamos las columnas con menos del 20% de valores faltantes. Ahora seleccionamos las variables que más nos interesan, ya que muchas están relacionadas con otras, por ejemplo hay variables que representan la variación de otra respecto al año anterior. Cambiamos las unidades de medida variables "population" y "gdp" a millones de habitantes y miles de millones de doláres respectivamente. Una vez realizado esto y con muchos menos datos faltantes, utilizamos la libreria "mice" para imputar.
+
+Una vez con los datos listos para comenzar, durante los primeros análisis nos dimos cuenta de la cantidad de datos anómalos que detectábamos, en su mayoría provenientes de variables con algunos valores muy superiores al resto, es por esto que decidimos aplicar una primera transformación para expresar las variables en millones de habitantes. Así, el consumo de los países es comparable. Aún así, fue necesaria una transformación para aplanar los datos, en este caso logarítmica. Para ello se excluyó la variable de "net_elec_imports" que cuantifica las importaciones de electricidad y puede ser negativa. La transformación es log(1 + x). Esto es debido a que estos datos no proceden de un entorno controlado y la disparidad entre países es algo intrínseco. Por tanto, buscando suavizar estas diferencias con los valores más altos, se aplica la transformación por logaritmo. Continuamos ahora con los datos listos para el análisis. 
+
+COMPLETAR CON EXPLORATORIO DE QUE COMO HAN CAMBIADO LOS DATOS.
+
+## Análisis PCA
+
+Comenzamos el Análisis en Componentes Principales con el objetivo de ver cómo se relacionan las variables entre sí. Entre las preguntamos que nos formulamos están: **¿Qué países son los que más consumen?**, **¿Cuál es la forma más común de producir energía?**, **¿Existe relación entre el patrón de consumo y las emisiones?**, **¿Hay países con políticas verdes?**, **¿Cuáles son?**.
+
+Realizamos nuestro modelo PCA con 4 componentes y usando como variables suplementarias "country", "year" y "population". Para verificar la validez de nuestro modelo, estudiamos el gráfico de la T2 de Hotelling para buscar observaciones anómalas.
+
+
+```{r, warning=FALSE}
+datos_log = read.csv('./datos_per_capita.csv', sep = ';')
+
+columnas_excluidas <- c("country", "year", "population", "net_elec_imports")
+columnas_a_transformar <- setdiff(names(datos_log), columnas_excluidas)
+
+# Aplicar la transformación logarítmica después de sumar 1 a cada valor
+# Usamos lapply para aplicar la función a cada columna seleccionada
+datos_log[columnas_a_transformar] <- lapply(datos_log[columnas_a_transformar], function(x) log(x + 1))
+library(FactoMineR)
+library(factoextra)
+datos = datos_log
+K = 4
+pca = PCA(datos, scale.unit = TRUE, graph = FALSE, ncp = K, quali.sup = which(colnames(datos) == "country"), quanti.sup = which(colnames(datos) %in% c("year", "population")))
+```
+
+```{r}
+eig.val = get_eigenvalue(pca)
+misScores = pca$ind$coord[,1:K]
+miT2 = colSums(t(misScores**2)/eig.val[1:K,1])
+I = nrow(datos)
+F95 = K*(I**2 - 1)/(I*(I - K)) * qf(0.95, K, I-K)
+F99 = K*(I**2 - 1)/(I*(I - K)) * qf(0.99, K, I-K)
+
+plot(1:length(miT2), miT2, type = "p", xlab = "Observaciones", ylab = "T2")
+abline(h = F95, col = "orange", lty = 2, lwd = 2)
+abline(h = F99, col = "red3", lty = 2, lwd = 2)
+```
+
+
+
+Vemos claramente que hay más valores anómalos de los esperados, sin embargo, proseguiremos con el análisis para entender el porqué. Además podemos apreciar que las observaciones anómalas pertenecen a una serie de países al estar juntas entre sí, ya que las observaciones en los datos están ordenadas por país y año. Por lo tanto, estos países presentarán unas características que el modelo no ajusta completamente. Hay un total de `r length(which(miT2 > F95))` valores por encima del intervalo del 95% y `r length(which(miT2 > F99))` por encima del 99%.
+
+Vamos a ver de qué países se trata:
+
+```{r}
+anomalas = which(miT2 > F95)
+anomalos = datos[anomalas,]
+print(unique(anomalos$country))
+```
+
+Vemos que hay países bastante diversos. Intentaremos ver el por qué de estas proyecciones lejos del centro del modelo.
+
+### Loading plots
+
+Nos centramos ahora en los gráficos de variables para visualizar la importancia de cada una de las variables en las componentes. No mostraremos aquí todas las variables a la vez porque se satura el gráfico. Tampoco mostraremos todos los loadings plots, solo los más relevantes. El resto estará en el anexo B. Iremos mostrando las variables más importantes en cada componente. Para las variables que más contribuyen a la primera componente.
+
+```{r}
+misLoadings = sweep(pca$var$coord, 2, sqrt(pca$eig[1:K,1]), FUN="/")
+pc1 = array(misLoadings[,1]**2)
+n = array(colnames(datos[,-c(1,2,3)]))
+b1 = data.frame(loadings=pc1, nombres=n)
+dataframe_ordenado <- b1[order(-b1$loadings),]
+select_var = c("primary_energy_consumption", "electricity_demand",      "electricity_generation","fossil_electricity","greenhouse_gas_emissions","gdp","gas_electricity")
+fviz_pca_var(pca, axes = c(1,2), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), select.var=list(name = select_var))
+```
+
+```{r}
+misLoadings = sweep(pca$var$coord, 2, sqrt(pca$eig[1:K,1]), FUN="/")
+pc1 = array(misLoadings[,2]**2)
+n = array(colnames(datos[,-c(1,2,3)]))
+b1 = data.frame(loadings=pc1, nombres=n)
+dataframe_ordenado <- b1[order(-b1$loadings),]
+fviz_pca_var(pca, axes = c(1,2), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), select.var=list(name = dataframe_ordenado$nombres[1:6]))
+```
+
+```{r}
+library(gridExtra)
+```
+
+
+De estos dos gráficos deducimos que la primera componente representa el consumo total del país, que está muy relacionado con el desarrollo del pais ("gdp") y las emisiones que este emite. Podemos intuir que los países más desarrollados serán también aquellos que más consuman. La segunda componente representa el consumo de energía verde, ya que contribuyen a esta componente "renewables_energy", "hydro_electricity" y la energía nuclear, que comienza a considerarse verde también.
+
+
+Los loading plot de las componentes 3 y 4 se encuentran en el anexo B. Resaltamos que la 4 componente diferencia los países importadores y exportadores de electricidad, siendo estos últimos los que en promedio más producción de gas, crudo y carbón tienen. De aquí podemos concluir que aquellos países con reservas ya sean vegetales o fósiles, tenderán a abastecerse ellos mismos de energía.
+
+
+## Gráficos Scores
+
+```{r}
+fviz_pca_ind(pca, axes = c(1,2), geom = c("point"),
+                  habillage = factor(datos$gdp > mean(datos$gdp))) +
+  tune::coord_obs_pred()
+
+fviz_pca_ind(pca, axes = c(3,4), geom = c("point"), 
+                  habillage = factor(datos$gdp > mean(datos$gdp))) +
+  tune::coord_obs_pred() 
+```
+
+Observamos claramente lo que habíamos supuesto en los loading plots. A la derecha de la primera componente caen los países con un PIB per cápita superior a la media. Estos países más desarrollados, muestran una mayor variabilidad respecto a la segunda componente. Esto significa que entre los desarrollados, hay países que han optado por adoptar energías verdes y otros que las rechazan. Mientras que en el grupo de la izquierda, es más homogéneo respecto al eje Y. Esto nos dice que, los países menos desarrollados no suelen adoptar energías renovables. Esto puede ser a su costosa inversión inicial o porque prefieren fuentes de energía más estables.
+
+Respecto al gráfico de la tercera y cuarta componente, podemos observar que los países que en promedio tendrán mayores importaciones de electricidad son aquellos más desarrollados mientras que los menos ricos tenderán a producir la energía ellos mismos ya que el consumo total que tienen es menor.
+
+En el anexo B podemos ver que el escalado por población hace que se formen dos grupos de países muy poblados en la primera componente. Los que están en vías de desarrollo y los más importantes debido a su población y gran desarrollo. A pesar de su separación en las dos primeras componentes, entre la tercera y la cuarta no se diferencian tanto, por lo que tenderán a tener pocas importaciones y una alta producción de carbón en promedio. Es decir, los países poblados se suelen comportar de una manera parecida, usando los desarrollados en promedio más energías verdes por sus scores más alto en la segunda componente.
+
+
+```{r}
+p1 = fviz_pca_ind(pca, axes = c(1,2), geom = c("point"), select.ind = list(name = which(pca$ind$coord[,4] > 5)), col.ind = "y")+
+  tune::coord_obs_pred()
+
+p2 = fviz_pca_ind(pca, axes = c(3,4), geom = c("point"), 
+                  select.ind = list(name = which(pca$ind$coord[,4] > 5)), col.ind = "y") +
+  tune::coord_obs_pred() 
+  
+
+grid.arrange(p1,p2, nrow = 1)
+```
+
+Resulta curioso ver, a la vista de este gráfico donde se han seleccionado los individuos con mayor score en la cuarta componente (relacionada con las importaciones), que los países con mayores importaciones de electricidad en promedio son aquellos con menor poco consumo de energías verdes y un alto consumo de combustibles fósiles.
+
+
+Los países con mayores emisiones y consumo de energías fósiles por millón de habitantes son:
+
+```{r}
+print(unique(datos[pca$ind$coord[,2] < -4, "country"]))
+```
+Los países con mayor uso de energías verdes:
+
+```{r}
+print(unique(datos[pca$ind$coord[,2] > 4.5, "country"]))
+```
+
+Para poder entender la naturaleza de algunos de las observaciones anómalas vemos el siguiente gráfico.
+
+```{r}
+contribT2 = function (X, scores, loadings, eigenval, observ, cutoff = 2) {
+  # X is data matrix and must be centered (or centered and scaled if data were scaled)
+  misScoresNorm = t(t(scores**2) / eigenval)
+  misContrib = NULL
+  for (oo in observ) {
+    misPCs = which(as.numeric(misScoresNorm[oo,]) > cutoff)
+    lacontri = sapply(misPCs, function (cc) (misScores[oo,cc]/eigenval[cc])*loadings[,cc]*X[oo,])
+    lacontri = rowSums((1*(sign(lacontri) == 1))*lacontri)
+    misContrib = cbind(misContrib, lacontri)
+  }
+  colnames(misContrib) = rownames(misScoresNorm[observ,])
+  return(misContrib)
+}
+```
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+datosCE = datos[,3:25]
+datosCE = scale(datosCE, center = TRUE, scale = TRUE)
+X = as.matrix(datosCE)
+# La función sweep aplica sobre el vector fila de los loadings pero los divide por la raiz cuadrada del valor propio
+misLoadings = sweep(pca$var$coord, 2, sqrt(pca$eig[1:K,1]), FUN="/")
+obs = which.max(pca$ind$coord[,2])
+mycontrisT2 = contribT2(X = X, scores = misScores, loadings = misLoadings, 
+                        eigenval = eig.val[1:K,1], observ = obs,
+                        cutoff = 2)
+mycontrisT2 = as.data.frame(mycontrisT2)
+library(ggplot2)
+ggplot(mycontrisT2, aes(x = rownames(mycontrisT2), y = V1)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7.5)) +
+  labs(x = "Variable", y = "contrib T2", title =  paste0("Observación: ", datos[obs, "country"]," ", datos[obs, "year"]))
+
+```
+
+
+Aquí vemos el gráfico de contribución a la T2 de la observación con más T2. Se trata de Suecia en el año 2022 que registró valores altos en consumo de energías verdes. Esta observación ha aportado información al estudio ya que demuestra que sí hay países que están optando por un mix energético más limpio.
+
+
+## Análisis clustering
+
+Vamos a ver como se agrupan los países en función de las energías consumidas y su relación con las emisiones de efecto invernadero, por lo que esa variable la excluiremos.
+
+```{r}
+col = setdiff(colnames(datos_log[,4:25]), "greenhouse_gas_emissions")
+datosc = datos_log[, col]
+datosc = scale(datosc, center = TRUE, scale = TRUE)
+datosc = as.data.frame(datosc)
+```
+
+Tal y como se explica en el anexo C, utilizaremos la distancia de Manhattan por ser más robusta a valores extremos y que tiene más tendencia de agrupamiento en los datos en el índice de Hopkins. Tras explorar los modelos disponibles, usaremos un modelo jerárquico con el método de Ward con 4 clusters. Los resultados que apoyan nuestra elección están en el anexo C. Aquí podemos ver la distribución en una proyección PCA.
+
+
+```{r}
+midist2 <- get_dist(datosc, stand = FALSE, method = "manhattan")
+clust1 <- hclust(midist2, method="ward.D2")
+grupos2 = cutree(clust1, k = 4)
+p1 = fviz_cluster(object = list(data=datosc, cluster=grupos2), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8)  +
+  labs(title = "Modelo jerarquico + PCA",
+       subtitle ="Dist Manhattan, Metodo Ward, K=4") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+p2 = fviz_cluster(object = list(data=datosc, cluster=grupos2), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8, axes = 3:4)  +
+  labs(title = "Modelo jerarquico + PCA",
+       subtitle ="Dist Manhattan, Metodo Ward, K=4") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+Vemos que la primera componente es la que diferencia los clusters 1 de los demás, mientras que la segunda componente diferencia entre 2, 3 y 4. Podemos interpretar, usando la información obtenida también en PCA, que el cluster 1 engloba a los países menos desarrollados con menos consumo. Los otros clusters representan los países más desarrollados dividivos en 3 clusters según su consumo de energías verdes (segunda componente).
+
+
+```{r}
+misclust = factor(grupos2)
+miPCA = PCA(datosc, scale.unit = FALSE, graph = FALSE, ncp = 4)
+```
+
+
+```{r}
+fviz_pca_ind(miPCA, geom = "point", habillage = misclust, addEllipses = FALSE, 
+             palette = rainbow(4))
+```
+
+Para facilitar la interpretación de este score plot se puede consultar el gráfico de loadings del anexo C o los resultados del PCA. El cluster 3 estará representado por los países con gran consumo de energías fósiles y emisiones por cada millón de habitantes mientras que el 4 estará representado por los países con políticas energéticas más limpias. Cabe destacar que hay un grupo de observaciones del cluster 4 a la izquierda de la primera componente, por lo que podemos afirmar que algunos países menos desarrollados también están adoptando formas de energía limpias.
+
+```{r}
+boxplot(datos_log$greenhouse_gas_emissions ~ misclust, col = rainbow(4))
+```
+
+Este boxplot confirma el resultado esperable de lo que habíamos observado. El cluster que más emisiones tiene es el 3. Sin embargo, resulta que el cluster que menos contamina no es el 4 que es el que representa los países desarrollados con políticas energéticas verdes, sino el 1. Esto nos lleva a pensar que a pesar de invertir en energías limpias, al ser países con mucho consumo total, también necesitan de energías más contaminantes para abastecerse. Los intervalos de Tukey están en el anexo C.
+
+
+## Análisis PLS
+
+Comenzamos el análisis PLS. Tendremos una única variable respuesta, "greenhouse_gas_emissions" que trataremos de predecir a partir del resto de variables de consumo energético. Como tenemos muchas observaciones vamos a dividir en datos Test y datos Train. Para ajustar el número de componentes en el modelo PLS en los datos de entrenamiento usamos la validación cruzada representada en el gráfico que combina R2 y Q2 del anexo D. Escogeremos 4 componentes ya que a pesar que R2 y Q2 aumenten, no lo hacen significativamente.
+
+```{r}
+library(caret)
+datos_log = read.csv('./datos_per_capita.csv', sep = ';')
+
+columnas_excluidas <- c("country", "year", "population", "net_elec_imports")
+columnas_a_transformar <- setdiff(names(datos_log), columnas_excluidas)
+datos_log[columnas_a_transformar] <- lapply(datos_log[columnas_a_transformar], function(x) log(x + 1))
+filasTrain = createDataPartition(datos_log$greenhouse_gas_emissions, p = 0.8, list=FALSE)
+datosTrain = datos_log[filasTrain,]
+datosPLS = subset(datosTrain, select = -c(population, country, year))
+y = datosPLS$greenhouse_gas_emissions
+x = subset(datosPLS, select = -greenhouse_gas_emissions)
+library(ropls)
+```
+
+```{r}
+mypls = opls(x = x, y = y, predI = 4, crossvalI = 20, scaleC = "standard", permI = 30, fig.pdfC = "none")
+misScores = mypls@scoreMN
+varT = apply(misScores, 2, var)
+miT2 = colSums(t(misScores**2) / varT)
+N = nrow(x)
+A = 4
+F95 = A*(N**2 - 1)/(N*(N - A)) * qf(0.95, A, N-A)
+F99 = A*(N**2 - 1)/(N*(N - A)) * qf(0.99, A, N-A)
+
+
+plot(1:length(miT2), miT2, type = "l", xlab = "observaciones", ylab = "T2",
+     main = "PLS: T2-Hotelling")
+abline(h = F95, col = "orange", lty = 2, lwd = 2)
+abline(h = F99, col = "red3", lty = 2, lwd = 2)
+```
+
+La cantidad de valores anómalos es:
+
+```{r}
+length(which(miT2 > F99))
+```
+
+Hay 4 veces más anómalos de los esperados pero tratándose de observaciones de países muy dispares, vamos a proseguir con el análisis para tratar de averiguar el por qué.
+
+```{r}
+ordenT2 = data.frame(Año = datosTrain$year, Pais = datosTrain$country, T2 = miT2)
+ordenT2 = ordenT2[order(ordenT2$T2, decreasing = TRUE),]
+head(ordenT2)
+```
+
+Vemos que la mayoría de observaciones anómalas provienen de países pequeños, como Luxemburgo. En PCA vimos algo parecido, por lo que mantendremos estas observaciones para poder entender su comportamiento. Continuamos con los residuos.
+
+```{r}
+myT = mypls@scoreMN
+myP = mypls@loadingMN
+myE = scale(x) - myT%*%t(myP)
+mySCR = rowSums(myE^2)   # SPE 
+plot(1:length(mySCR), mySCR, type = "l", main = "SCR", 
+     xlab = "observaciones")
+g = var(mySCR)/(2*mean(mySCR))
+h = (2*mean(mySCR)^2)/var(mySCR)
+chi2lim = g*qchisq(0.95, df = h)
+abline(h = chi2lim, col = "orange", lty = 2)
+chi2lim99 = g*qchisq(0.99, df = h)
+abline(h = chi2lim99, col = "red3", lty = 2)
+```
+
+
+```{r}
+ordenSCR = data.frame(Año = datosTrain$year, Pais = datosTrain$country, SCR = mySCR)
+ordenSCR = ordenSCR[order(ordenSCR$SCR, decreasing = TRUE),]
+head(ordenSCR)
+```
+También nos encontramos con observaciones con muchos residuos. Las dos que más tienen pertenecen a años cercanos de Australia. Mantendremos las observaciones en el estudio.
+
+La linealidad de los scores se puede ver en el anexo D.
+
+```{r}
+R2 <- function(Y, myYpred){
+  SCT_k <- apply(scale(Y), 2, function(i)sum(i^2))
+  SCE_k <- apply(myYpred, 2, function(i) sum(i^2))
+  
+  # By variable
+  R2_k <- SCE_k/SCT_k
+  
+  # Total R2
+  R2 <- sum(SCE_k)/sum(SCT_k)
+  
+  list(R2_kcum = R2_k,
+       R2cum   = R2)
+
+}
+
+
+PLS_R2 <- function(A, X, Y){
+  
+  mypls = opls(x = X, y = Y, 
+             predI = A, 
+             crossvalI = nrow(X), 
+             scaleC = "standard",
+             fig.pdfC = "none")
+  ### R2 for X space ####
+  myT = mypls@scoreMN
+  myP = mypls@loadingMN
+  myXpred = myT%*%t(myP)
+  R2X <- R2(X, myXpred)
+  
+  ### R2 for Y space ####
+  myC <- mypls@cMN
+  myYpred = myT%*%t(myC)
+  R2Y <- R2(Y = Y, myYpred = myYpred)
+  R2Y
+  
+  results <- list(R2X, R2Y)
+  names(results) <- c("EspacioX", "EspacioY")
+  results
+}
+
+result_all <- lapply(c(1:4), PLS_R2, x, y)
+names(result_all) <- paste0( "comp", 1:2)
+
+
+# Hasta aquí, R2 acumulados. Calculemos por componente
+num_components <- length(result_all)  # Ajusta esto según la estructura de tu objeto
+# Inicializar listas para almacenar R2 incrementales para cada componente y para cada variable dentro de los componentes
+R2kX <- R2kY <- vector("list", num_components )
+R2X <- R2Y <- numeric(num_components)
+
+R2kX[[1]] <- result_all[[1]]$EspacioX$R2_kcum
+R2kY[[1]] <- result_all[[1]]$EspacioY$R2_kcum
+R2X[1] <- result_all[[1]]$EspacioX$R2cum
+R2Y[1] <- result_all[[1]]$EspacioY$R2cum
+
+
+# Calcular R2 incrementales para cada componente y para cada variable dentro de los componentes
+for (k in 2:num_components) {
+  # Calcula la diferencia entre los vectores de R2 acumulativos de componentes consecutivos para cada variable
+  R2kX[[k]] <- result_all[[k]]$EspacioX$R2_kcum - result_all[[k - 1]]$EspacioX$R2_kcum
+  R2kY[[k]] <- result_all[[k]]$EspacioY$R2_kcum - result_all[[k - 1]]$EspacioY$R2_kcum
+
+  R2X[k] <- result_all[[k]]$EspacioX$R2cum - result_all[[k - 1]]$EspacioX$R2cum
+  R2Y[k] <- result_all[[k]]$EspacioY$R2cum - result_all[[k - 1]]$EspacioY$R2cum
+}
+
+
+names(R2kX) <- paste0("comp", 1:A)
+names(R2kY) <- paste0("comp", 1:A)
+
+
+library(dplyr)
+df_R2kX <- do.call(rbind, lapply(seq_along(R2kX), function(i) {
+  data.frame(Componente = names(R2kX)[i],  # Usar los nombres de la lista como nombres de componentes
+             Variable = names(R2kX[[i]]),
+             Rk2 = as.numeric(R2kX[[i]]),
+             stringsAsFactors = FALSE)
+})) %>%
+  mutate(Componente = factor(Componente)) %>%
+  arrange(Variable, Componente)
+
+# Convertir la lista en un dataframe para ggplot R2kY
+df_R2kY <- do.call(rbind, lapply(seq_along(R2kY), function(i) {
+  data.frame(Componente = names(R2kY)[i],  # Usar los nombres de la lista como nombres de componentes
+             Variable = names(R2kY[[i]]),
+             Rk2 = as.numeric(R2kY[[i]]),
+             stringsAsFactors = FALSE)
+})) %>%
+  mutate(Componente = factor(Componente)) %>%
+  arrange(Variable, Componente)
+
+ggplot(df_R2kX, aes(x = Variable, y = Rk2, fill = Componente)) +
+  geom_bar(stat = "identity", position = "stack") +
+    scale_fill_viridis_d() + 
+  labs(title = "Contribución de Componentes al R^2 por Variable en X",
+       x = "Variable", y = "R^2",
+       fill = "Componente") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+```
+
+
+El ajuste por componente del espacio Y está en el anexo D.
+
+Vemos que la primera componente es la que más explica en las variables más importantes en el consumo de un país, mientras que la segunda ajusta mucho mejor las variables relacionadas con energías verdes. Situación muy parecida a la que encontramos en el análisis PCA. El segundo gráfico no aporta mucha información porque solo tenemos una variable de respuesta. Con esto hemos visto el comportamiento de la R2, vamos a ver Q2. Ya conocemos la Q2 en el conjunto de entrenamiento vamos a ver en el de test.
+
+Vamos a calcular la Q2 en los datos Test.
+
+```{r}
+filasTrain = createDataPartition(datos_log$greenhouse_gas_emissions, p = 0.8, list=FALSE)
+datosTrain = datos_log[filasTrain,]
+datosPLS = subset(datosTrain, select = -c(population, country, year))
+y = datosPLS$greenhouse_gas_emissions
+x = subset(datosPLS, select = -greenhouse_gas_emissions)
+```
+
+```{r}
+datosTest = datos_log[-filasTrain,]
+datosTest = subset(datosTest, select = -c(population, country, year))
+ytest = datosTest$greenhouse_gas_emissions
+xtest = subset(datosTest, select = -greenhouse_gas_emissions)
+```
+
+```{r}
+datosTestEsc = xtest
+datosTestEsc = scale(datosTestEsc, center = colMeans(x), scale = apply(x, 2, sd))
+pred = predict(mypls, datosTestEsc)
+yreal = scale(ytest, center = mean(y), scale = sd(y))
+head(pred)
+head(yreal)
+resul = as.data.frame(pred)
+resul$Real = yreal
+head(resul)
+```
+
+Podemos ver que tiene una alta capacidad predictora en el conjunto Test. Cabe destacar que las emisiones no pueden ser negativas, esto ocurre porque se ha centrado y escalado.
+
+```{r}
+error = as.matrix(yreal - pred)
+press = t(error)%*%error
+SCT_k = apply(datosTestEsc, 2, function(i)sum(i^2))
+sct = sum(SCT_k)
+q2 = 1-(press/sct)
+q2
+```
+
+Lo corrobora la Q2.
+
+
+Vamos a ver la relación entre las variables predictoras y la variable de respuesta.
+
+```{r}
+library(ggrepel)
+data_plot <- rbind(data.frame(mypls@weightStarMN, space = "X"),
+      data.frame(mypls@cMN, space = "Y"))
+data_plot <- cbind(data_plot, variable = rownames(data_plot))
+
+ggplot(data_plot, aes(x = p1, y = p2, col = space, shape = space)) +
+  geom_point() +
+  geom_text_repel(label=rownames(data_plot), size = 2) +
+  xlim(min(data_plot$p1)-0.2,max(data_plot$p1)+0.1) +
+  ylim(min(data_plot$p2)-0.2,max(data_plot$p2)+0.1) +
+  coord_fixed(ratio = 1) +
+  theme_bw() +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  xlab("w*c (comp 1)") +
+  ylab("w*c (comp 2)")
+```
+
+Las variables que más influyen en las emisiones de efecto invernadero son "fossil_electricity" y "coal_electricity" mientras que las que más las disminuyen son "renewables_electricity" e "hydro_electricity". De las energías verdes, la que más ayuda a reducir las emisiones según el modelo es la hidráulica.
+
+
+
+
+
+```{r}
+coef = as.data.frame(mypls@coefficientMN[order(abs(mypls@coefficientMN[, 1]), decreasing = TRUE),])
+colnames(coef) = "y1"
+
+coef$Variable = rownames(coef)
+
+coef$Variable = factor(coef$Variable, levels = coef$Variable)
+
+library(ggplot2)
+ggplot(coef, aes(x = Variable, y = y1)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Variable", y = "Coefficient", title = "PLS Regression Coefficients")
+
+```
+
+Fijándonos en los coeficientes de regresión PLS observamos que la variable con mayor coeficiente es fossil_electricity, por lo que podemos confirmar que se trata de una variable importante para las emisiones de un país, seguida de la electricidad producida a partir de carbón. Este gráfico lo podemos usar para teorizar que la energía nuclear debería considerarse por los países que buscan reducir sus emisiones, ya que con un coeficiente negativo tenderá a reducirlas.
+
+
+```{r}
+vip = as.data.frame(sort(mypls@vipVn, decreasing = TRUE))
+colnames(vip) = "vip"
+
+vip$Variable = rownames(vip)
+
+vip$Variable = factor(vip$Variable, levels = vip$Variable)
+
+library(ggplot2)
+ggplot(vip, aes(x = Variable, y = vip)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
+  labs(x = "Variable", y = "VIP")
+```
+
+Las variables más importantes para el modelo son las que las que caracterizan el consumo total de un país y la electricidad fósil.
+
+
+
+
+## Anexos 
+
+1. [Anexo A: Tratamiento y limpieza de datos](#anexo-a) 
+
+2. [Anexo B: PCA](#anexo-b)  
+
+3. [Anexo C: Clustering](#anexo-c) 
+
+4. [Anexo D: Pls](#anexo-d) 
+
+
+
+## Anexo A
+
+Este es el porcentaje de datos faltantes por fila al comenzar. Debemos eliminar las observaciones con muchos faltantes ya que no aportan información.
+
+```{r}
+datos <- read.csv("owid-energy-data.csv", header = TRUE, sep = ",")
+numNA = apply(datos, 1, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos, 1, function(x) mean(is.na(x))), 2)
+tablaNA2 = data.frame(numNA, percNA)
+barplot(table(tablaNA2$percNA), xlab = "% Valores faltantes en fila", ylab = "Número de casos", main = "Datos iniciales")
+```
+
+```{r}
+datos2 = datos[datos$year >= 2000,]
+paises_importantes_ingles <- c("United States", "China", "Japan", "Germany", "India",
+                               "United Kingdom", "France", "Brazil", "Italy", "Canada",
+                               "South Korea", "Russia", "Australia", "Spain", "Mexico",
+                               "Indonesia", "Netherlands", "Switzerland", "Saudi Arabia", "Turkey",
+                               "Taiwan", "Poland", "Sweden", "Belgium", "Argentina",
+                               "Thailand", "Austria", "Iran", "Norway", "United Arab Emirates",
+                               "Nigeria", "Israel", "Malaysia", "Singapore", "Ireland", "South Africa",
+                               "Denmark", "Philippines", "Bangladesh", "Colombia", "Egypt",
+                               "Pakistan", "Vietnam", "Finland", "Chile", "Greece",
+                               "Portugal", "Czech Republic", "Peru", "Hungary", "New Zealand",
+                               "Algeria", "Kazakhstan", "Qatar", "Kuwait", "Ukraine",
+                               "Romania", "Vietnam", "Ecuador", "Oman", "Sri Lanka",
+                               "Kenya", "Guatemala", "Tanzania", "Syria", "Ivory Coast",
+                               "Morocco", "Ethiopia", "Myanmar", "Lithuania", "Latvia",
+                               "Bolivia", "Slovakia", "Slovenia", "Panama", "Uruguay",
+                               "Cuba", "Ghana", "Lebanon", "Croatia", "Serbia", "Yemen",
+                               "Lebanon", "Tunisia", "Turkmenistan", "Uzbekistan", "Bulgaria",
+                               "Dominican Republic", "Bahrain", "Slovenia", "Slovakia",
+                               "Oman", "Luxembourg", "Libya", "Paraguay", "Kosovo")
+datos3 = datos2[datos2$country %in% paises_importantes_ingles,]
+n_max = 0.2*nrow(datos3)
+datos_limpios = subset(datos3, select = colSums(is.na(datos3)) <= n_max)
+```
+Se nos queda un dataframe con **`r nrow(datos_limpios)`** observaciones y **`r ncol(datos_limpios)`** variables.
+
+Veamos ahora que hay bastantes menos valores faltantes.
+
+```{r}
+numNA = apply(datos_limpios, 1, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos_limpios, 1, function(x) mean(is.na(x))), 2)
+tabla_datos_limpios_por_filas = data.frame(numNA, percNA)
+barplot(table(tabla_datos_limpios_por_filas[2]), xlab = "% Valores faltantes en fila", ylab = "Número de casos", main = "Datos limpios")
+```
+
+Tras imputar los datos y aplicar las dos transformaciones, vamos a ver la distribución de los datos.
+
+```{r}
+library(mice)
+datos = subset(datos_limpios, year >= 2000)
+seleccion = grepl('share|per_capita|low_carbon|iso_code|twh|biofuel',names(datos))
+columnas_importantes <- datos[, !seleccion]
+population_entre_millon = columnas_importantes['population']/10^6
+columnas_importantes['population'] = population_entre_millon
+columnas_importantes['gdp'] = columnas_importantes['gdp']/10^9
+datos_finales = subset(columnas_importantes, year >= 2000)
+datos_finales = mice(datos_finales, m = 5, print = FALSE, method = "pmm")
+datosImp = complete(datos_finales)
+datos = datosImp[, setdiff(colnames(datosImp), "energy_cons_change_pct")]
+```
+
+```{r}
+# dividir por la población
+columnas_numericas <- names(datos)[sapply(datos, is.numeric)]
+columnas_numericas <- setdiff(columnas_numericas, c("population", "year"))
+for (columna in columnas_numericas) {
+  datos[[columna]] <- datos[[columna]] / datos$population
+}
+
+datos_log = datos
+
+columnas_excluidas <- c("country", "year", "population", "net_elec_imports")
+columnas_a_transformar <- setdiff(names(datos_log), columnas_excluidas)
+
+# Aplicar la transformación logarítmica después de sumar 1 a cada valor
+# Usamos lapply para aplicar la función a cada columna seleccionada
+datos_log[columnas_a_transformar] <- lapply(datos_log[columnas_a_transformar], function(x) log(x + 1))
+```
+
+
+```{r}
+datosImp = read.csv('./datos_per_capita.csv', sep = ';') 
+elim <- c("country", "year", "faltantes") 
+
+
+# Excluir las columnas no deseadas 
+
+datos <- datosImp[, !names(datosImp) %in% elim] 
+
+  
+
+# Asegurar que todas las columnas son numéricas 
+
+datos <- datos[, sapply(datos, is.numeric)] 
+
+  
+
+# Análisis exploratorio inicial 
+
+# Ajustar los márgenes para generar el gráfico 
+
+par(mfrow = c(4, 4), mar = c(2, 2, 2, 2))  
+
+for (col in names(datos)) { 
+
+    hist(datos[[col]], main = paste(col), xlab = col, col = "skyblue", border = "white") 
+
+} 
+```
+
+
+
+## Anexo B
+
+Realizamos un scree plot para poder elegir el número de componentes adecuado para nuestro modelo, a la vista del siguiente gráfico escogemos 4 componentes.
+
+```{r}
+datos_log = read.csv('./datos_per_capita.csv', sep = ';')
+
+columnas_excluidas <- c("country", "year", "population", "net_elec_imports")
+columnas_a_transformar <- setdiff(names(datos_log), columnas_excluidas)
+
+# Aplicar la transformación logarítmica después de sumar 1 a cada valor
+# Usamos lapply para aplicar la función a cada columna seleccionada
+datos_log[columnas_a_transformar] <- lapply(datos_log[columnas_a_transformar], function(x) log(x + 1))
+datos = datos_log
+k = min(nrow(datos), ncol(datos))
+pca = PCA(datos, scale.unit = TRUE, graph = FALSE, ncp = k, quali.sup = which(colnames(datos) == "country"), quanti.sup = which(colnames(datos) %in% c("year", "population")))
+eig.val = get_eigenvalue(pca)
+VPmedio = 100 * (1/nrow(eig.val))
+fviz_eig(pca, addlabels = TRUE) +
+  geom_hline(yintercept=VPmedio, linetype=2, color="red")
+```
+Elegimos 4 componentes principales. Observamos que con estas 3 componentes solo se explica un `r eig.val[4,3]` de la variabilidad total. También observamos que tampoco hemos escogido todas las componentes que explican más de lo que explicaría cada una de ellas si todas explicasen lo mismo.
+
+```{r}
+library(knitr)
+kable(eig.val)
+```
+
+
+Vemos ahora los loading plots de todas las variables.
+
+```{r}
+fviz_pca_var(pca, axes = c(1,2), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+```{r}
+fviz_pca_var(pca, axes = c(3,4), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+
+Con los gráficos de contribuciones podemos obtener las variables más importantes en cada componente.
+
+```{r}
+fviz_contrib(pca, choice = "var", axes = 1)
+```
+```{r}
+fviz_contrib(pca, choice = "var", axes = 2)
+```
+
+```{r}
+fviz_contrib(pca, choice = "var", axes = 3)
+```
+
+```{r}
+fviz_contrib(pca, choice = "var", axes = 4)
+```
+
+Los loading plots de las componentes 3 y 4 no mostradas en el apartado del PCA.
+
+```{r}
+misLoadings = sweep(pca$var$coord, 2, sqrt(pca$eig[1:K,1]), FUN="/")
+pc1 = array(misLoadings[,3]**2)
+n = array(colnames(datos[,-c(1,2,3)]))
+b1 = data.frame(loadings=pc1, nombres=n)
+dataframe_ordenado <- b1[order(-b1$loadings),]
+fviz_pca_var(pca, axes = c(3,4), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), select.var=list(name = dataframe_ordenado$nombres[1:6]))
+```
+
+```{r}
+misLoadings = sweep(pca$var$coord, 2, sqrt(pca$eig[1:K,1]), FUN="/")
+pc1 = array(misLoadings[,4]**2)
+n = array(colnames(datos[,-c(1,2,3)]))
+b1 = data.frame(loadings=pc1, nombres=n)
+dataframe_ordenado <- b1[order(-b1$loadings),]
+fviz_pca_var(pca, axes = c(3,4), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), select.var=list(name = dataframe_ordenado$nombres[1:6]))
+```
+
+
+Vemos los dos grupos de países poblados en la primera componente. 
+
+```{r}
+fviz_pca_ind(pca, axes = c(1,2), geom = c("point"),
+                  habillage = factor(datos$population > mean(datos$population))) +
+  tune::coord_obs_pred()
+
+fviz_pca_ind(pca, axes = c(3,4), geom = c("point"), 
+                  habillage = factor(datos$population > mean(datos$population))) +
+  tune::coord_obs_pred()
+```
+
+## Anexo C
+
+Las matrices de distancias euclídeas y de Manhattan respectivamente.
+
+```{r}
+midist <- get_dist(datosc, stand = FALSE, method = "euclidean")
+```
+
+```{r}
+midist2 <- get_dist(datosc, stand = FALSE, method = "manhattan")
+```
+
+Estos son los coeficientes de Hopkins con las dos distancias.
+
+```{r}
+set.seed(100)
+myN = c(20, 50, 70)  # m
+myhopkins = NULL
+myseed = sample(1:1000, 3)
+for (i in myN) {
+  for (j in myseed) {
+    tmp = get_clust_tendency(data = datosc, n = i, graph = FALSE, seed = j)
+    myhopkins = c(myhopkins, tmp$hopkins_stat)
+  }
+}
+summary(myhopkins)
+```
+
+
+```{r}
+hopkins_con_manhattan = function (data, n, graph = TRUE, gradient = list(low = "red", 
+    mid = "white", high = "blue"), seed = 123) 
+{
+    set.seed(seed)
+    if (is.data.frame(data)) 
+        data <- as.matrix(data)
+    if (!(is.matrix(data))) 
+        stop("data must be data.frame or matrix")
+    if (n >= nrow(data)) 
+        stop("n must be no larger than num of samples")
+    if (!requireNamespace("reshape2", quietly = TRUE)) {
+        stop("reshape2 package needed for this function to work. Please install it.")
+    }
+    data <- na.omit(data)
+    rownames(data) <- paste0("r", 1:nrow(data))
+    plot <- NULL
+    if (graph) {
+        plot <- fviz_dist(stats::dist(data), order = TRUE, show_labels = FALSE, 
+            gradient = gradient)
+    }
+    p <- apply(data, 2, function(x, n) {
+        runif(n, min(x), max(x))
+    }, n)
+    k <- round(runif(n, 1, nrow(data)))
+    q <- as.matrix(data[k, ])
+    distp = rep(0, nrow(data))
+    distq = 0
+    minp = rep(0, n)
+    minq = rep(0, n)
+    for (i in 1:n) {
+        distp[1] <- stats::dist(rbind(p[i, ], data[1, ]), method = "manhattan")
+        minqi <- stats::dist(rbind(q[i, ], data[1, ]), method = "manhattan")
+        for (j in 2:nrow(data)) {
+            distp[j] <- stats::dist(rbind(p[i, ], data[j, ]), method = "manhattan")
+            error <- q[i, ] - data[j, ]
+            if (sum(abs(error)) != 0) {
+                distq <- stats::dist(rbind(q[i, ], data[j, ]), method = "manhattan")
+                if (distq < minqi) 
+                  minqi <- distq
+            }
+        }
+        minp[i] <- min(distp)
+        minq[i] <- minqi
+    }
+    list(hopkins_stat = sum(minp)/(sum(minp) + sum(minq)), plot = plot)
+}
+
+
+myN = c(20, 50, 70)  # m
+myhopkins = NULL
+myseed = sample(1:1000, 3)
+for (i in myN) {
+  for (j in myseed) {
+    tmp = hopkins_con_manhattan(data = datosc, n = i, graph = FALSE, seed = j)
+    myhopkins = c(myhopkins, tmp$hopkins_stat)
+  }
+}
+summary(myhopkins)
+
+```
+
+Hay más tendencia de agrupamiento con la distancia de Manhattan así que usaremos esa para los modelos jerárquicos.
+
+
+**Modelo jerárquicos**
+
+
+```{r}
+p1 = fviz_nbclust(x = datosc, FUNcluster = hcut, method = "silhouette", 
+                  hc_method = "ward.D2", k.max = 10, verbose = FALSE, 
+                  hc_metric = "manhattan") + labs(title = "Num. optimo clusters")
+p2 = fviz_nbclust(x = datosc, FUNcluster = hcut, method = "wss", 
+                  hc_method = "ward.D2", k.max = 10, verbose = FALSE, 
+                  hc_metric = "manhattan") + labs(title = "Num. optimo clusters")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+```{r}
+clust1 <- hclust(midist2, method="ward.D2")
+grupos1 = cutree(clust1, k = 5)
+```
+
+```{r}
+clust4 <- hclust(midist2, method="ward.D2")
+grupos2 = cutree(clust1, k = 4)
+```
+
+**Modelos de partición**
+
+```{r}
+p1 = fviz_nbclust(x = datosc, FUNcluster = kmeans, method = "silhouette", 
+             k.max = 10, verbose = FALSE) +
+  labs(title = "K-means")
+p2 = fviz_nbclust(x = datosc, FUNcluster = kmeans, method = "wss", 
+             k.max = 10, verbose = FALSE) +
+  labs(title = "K-means")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+```{r}
+set.seed(27)
+clust2 <- kmeans(datosc, centers = 5, nstart = 20)
+```
+
+
+```{r}
+p1 = fviz_cluster(object = list(data=datosc, cluster=grupos1), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8)  +
+  labs(title = "Modelo jerarquico + Proyeccion PCA",
+       subtitle ="Dist Manhattan, Metodo Ward, K=5") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+p2 = fviz_cluster(object = list(data=datosc, cluster=grupos1), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8, axes = 3:4)  +
+  labs(title = "Modelo jerarquico + Proyeccion PCA",
+       subtitle ="Dist Manhattan, Metodo Ward, K=5") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r}
+p1 = fviz_cluster(object = list(data=datosc, cluster=clust2$cluster), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8)  +
+  labs(title = "K-MEDIAS + Proyeccion PCA",
+       subtitle = "Dist euclidea, K=5") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+p2 = fviz_cluster(object = list(data=datosc, cluster=clust2$cluster), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8, axes = 3:4)  +
+  labs(title = "K-MEDIAS + Proyeccion PCA",
+       subtitle = "Dist euclidea, K=5") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+```{r}
+set.seed(27)
+clust3 <- kmeans(datosc, centers = 4, nstart = 20)
+
+
+p1 = fviz_cluster(object = list(data=datosc, cluster=clust3$cluster), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8)  +
+  labs(title = "K-MEDIAS + Proyeccion PCA",
+       subtitle = "Dist euclidea, K=4") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+p2 = fviz_cluster(object = list(data=datosc, cluster=clust3$cluster), stand = FALSE,
+             ellipse.type = "convex", geom = "point", show.clust.cent = FALSE,
+             labelsize = 8, axes = 3:4)  +
+  labs(title = "K-MEDIAS + Proyeccion PCA",
+       subtitle = "Dist euclidea, K=4") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+Índices de Dunn
+
+```{r}
+library(clusterCrit)
+m = as.matrix(datosc)
+dunn_index3 = intCriteria(m, clust3$cluster, "Dunn")
+dunn_index2 = intCriteria(m, grupos2, "Dunn")
+dunn_index1 = intCriteria(m, grupos1, "Dunn")
+print("KMeans")
+print(dunn_index3)
+print("Jerárquico Ward con dist Manhattan, K = 5")
+print(dunn_index1)
+print("Jerárquico Ward con dist Manhattan, K = 4")
+print(dunn_index2)
+```
+
+
+```{r}
+library(cluster)
+plot(silhouette(grupos1, midist2), col=rainbow(5), border=NA, main = "Manhattan WARD, K=5")
+plot(silhouette(grupos2, midist2), col=rainbow(4), border=NA, main = "Manhattan WARD, K=4")
+plot(silhouette(clust2$cluster, midist), col=rainbow(5), border=NA, main = "K-MEDIAS, K=5")
+plot(silhouette(clust3$cluster, midist), col=rainbow(4), border=NA, main = "K-MEDIAS, K=4")
+```
+
+```{r}
+misclust = factor(grupos1)
+miPCA = PCA(datosc, scale.unit = FALSE, graph = FALSE, ncp = 4)
+```
+
+Aquí vemos los clusters en la 3 y 4 componentes en una proyección PCA.
+
+```{r}
+fviz_pca_ind(miPCA, geom = "point", habillage = misclust, addEllipses = FALSE, 
+             palette = rainbow(5), axes = c(3,4))
+```
+
+Los loading plots para las interpretaciones de los clusters.
+
+```{r}
+fviz_pca_var(miPCA, axes = c(1,2), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+
+```{r}
+fviz_pca_var(miPCA, axes = c(3,4), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+
+Estos son resultados del test Anova usando la clasificación por clusters como factor y las emisiones como respuesta, así como los intervalos de Tukey.
+
+```{r}
+anova = aov(datos_log$greenhouse_gas_emissions ~ misclust)
+summary(anova)
+t = TukeyHSD(anova)
+plot(t)
+```
+
+
+## Anexo D
+
+```{r}
+plsC = opls(x = x, y = y, predI = min(dim(x)), crossvalI = 20, scaleC = "standard",fig.pdfC = "none")
+plot(1:min(dim(x)), plsC@modelDF$`R2Y(cum)`, type = "o", pch = 16, col = "blue3",
+     lwd = 2, xlab = "Components", ylab = "", main = "PLS model: Datos_log", ylim = c(0.9,1))
+lines(1:min(dim(x)), plsC@modelDF$`Q2(cum)`, type = "o", pch = 16, col = "red3",
+      lwd = 2)
+abline(h = 0.5, col = "red3", lty = 2)
+grid(col = "gray", lty = "dotted", lwd = 0.5)
+legend("bottomleft", c("R2Y", "Q2"), lwd = 2, 
+       col = c("blue3", "red3"), bty = "n")
+```
+
+
+```{r}
+par(mfrow = c(1,1))
+for (i in 1:4) {
+  plot(mypls@scoreMN[,i], mypls@uMN[,i], xlab = "t", ylab = "u",
+     main = paste0("Component ", i), col = "red3")
+}
+```
+
+
+```{r}
+diag(cor(mypls@scoreMN, mypls@uMN))
+```
+
+Podemos asumir la linealidad entre los scores t y u.
+
+```{r}
+ggplot(df_R2kY, aes(x = Variable, y = Rk2, fill = Componente)) +
+  geom_bar(stat = "identity", position = "stack") +
+    scale_fill_viridis_d() + 
+  labs(title = "Contribución de Componentes al R^2 por Variable en Y",
+       x = "Variable", y = "R^2",
+       fill = "Componente") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+```
+
+
+Loading plots.
+
+```{r}
+plot(x = mypls, typeVc = "x-loading",
+     parCexN = 0.5, parCompVi = c(1, 2), parPaletteVc = NA, 
+     parTitleL = TRUE, parCexMetricN = 0.5)
+```
+
+```{r}
+plot(x = mypls, typeVc = "x-loading",
+     parCexN = 0.5, parCompVi = c(3, 4), parPaletteVc = NA, 
+     parTitleL = TRUE, parCexMetricN = 0.5)
+```
+
+
+
+
+```{r}
+plot(x = mypls, typeVc = "x-score", parCompVi = c(1, 2), 
+     parLabVc = rep("*", nrow(x)))
+```
+
+```{r}
+plot(x = mypls, typeVc = "x-score", parCompVi = c(3, 4), 
+     parLabVc = rep("*", nrow(x)))
+```
+
+Coloreados por emisiones.

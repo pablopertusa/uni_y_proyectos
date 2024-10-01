@@ -1,0 +1,4 @@
+gcd
+gcd prg
+gcd prg teoria
+gcd prg teoria prg_teoria

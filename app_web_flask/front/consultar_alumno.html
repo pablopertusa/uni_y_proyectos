@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @font-face {
+            font-family:'montserrat';
+            src: url('http://127.0.0.1:5001/front/fonts/Montserrat/static/Montserrat-BoldItalic.ttf') format('truetype');
+                
+            font-style: normal;
+            font-weight: normal;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f5f5f5;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .main_title {
+            padding: 30px;
+            text-align: center;
+            font-family: montserrat;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .autocomplete {
+            position: fixed;
+            left: 41.4%;
+            width: 190px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .autocomplete-item {
+            padding: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .autocomplete-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        #searchInput {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+
+        #searchButton {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #searchButton:hover {
+            background-color: #45a049;
+        }
+
+        #info {
+            padding: 30px;
+        }
+    </style>
+    <title>Consultar información alumno</title>
+</head>
+<body>
+    <div>
+        <h1 class="main_title">Consultar información alumno</h1>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Buscar" oninput="buscarAutocompletado()">
+
+    <div class="autocomplete" id="autocomplete"></div>
+
+    <button id="searchButton" onclick="consultar()"><img src="http://127.0.0.1:5001/front/images/lupa.png" width="12" height="12"></button>
+
+    <div id="info"></div>
+    
+    <script>
+        function buscarAutocompletado() {
+            var input = document.getElementById('searchInput');
+            var autocompleteContainer = document.getElementById('autocomplete');
+            var inputValue = input.value;
+
+            autocompleteContainer.innerHTML = '';
+
+            // Realizar la solicitud al servidor solo si la entrada tiene al menos 1 caracteres
+            if (inputValue.length >= 1) {
+
+                // Realizar la solicitud al servidor para obtener autocompletado
+                fetch('http://127.0.0.1:5001/buscar/alumno/' + encodeURIComponent(inputValue))
+                    .then(response => response.json())
+                    .then(data => {
+
+                        // Verificar si 'resultado' está presente y es un array
+                        if ('respuesta' in data && Array.isArray(data.respuesta)) {
+                            var opciones = data.respuesta;
+
+                            // Mostrar los resultados del autocompletado
+                            opciones.forEach(opcion => {
+                                var autocompleteItem = document.createElement('div');
+                                autocompleteItem.className = 'autocomplete-item';
+                                autocompleteItem.textContent = opcion;
+
+                                // Asignar el clic del usuario para seleccionar el elemento
+                                autocompleteItem.onclick = function() {
+                                    input.value = opcion;
+
+                                    // Limpiar la lista de autocompletado
+                                    autocompleteContainer.innerHTML = ''; 
+                                };
+                                autocompleteContainer.appendChild(autocompleteItem);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+
+        function consultar() {
+            var nombreAlumno = document.getElementById('searchInput').value
+            fetch('/consultar/'+encodeURIComponent(nombreAlumno))
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Error en la solicitud.');
+                })
+                .then(data => {
+                    var contenedorInfo = document.getElementById('info');
+                    contenedorInfo.innerHTML = '<h3>Información de ' + nombreAlumno + '</h3>';
+                    contenedorInfo.innerHTML += '<p><b>Fecha nacimiento: </b>' + data.fecha_nacimiento + '</p>';
+                    contenedorInfo.innerHTML += '<p><b>Sexo: </b>' + data.sexo + '</p>';
+                    contenedorInfo.innerHTML += '<b>Asistencias</b>';
+                    for (var fecha of data.asistencias) {
+                        contenedorInfo.innerHTML += '<p>'+ fecha +'</p>';
+                    };
+
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

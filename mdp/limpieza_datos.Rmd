@@ -1,0 +1,233 @@
+---
+title: "proyecto"
+author: "Pablo Pertusa"
+date: "2024-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+datos <- read.csv("owid-energy-data.csv", header = TRUE, sep = ",")
+
+```
+
+Vemos que hay muchos valores faltantes tanto en variables como en observaciones.
+
+```{r}
+numNA = apply(datos, 2, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos, 2, function(x) mean(is.na(x))), 2)
+nombres_columnas = colnames(datos)
+tabla = data.frame(nombres_columnas, numNA, percNA)
+head(tabla)
+```
+
+Por lo que vemos casi todas las variables tienen más de un 20% de valores faltantes.
+
+```{r}
+numNA = apply(datos, 1, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos, 1, function(x) mean(is.na(x))), 2)
+tablaNA2 = data.frame(numNA, percNA)
+barplot(table(tablaNA2$percNA), xlab = "% Valores faltantes", ylab = "Número de casos", main = "datos")
+```
+
+Aquí lo que podemos ver es que hay muchas observaciones en los que la mayoría de los atributos son datos faltantes. Dada la dimensión de la base de datos, vamos a hacer una selección de las observaciones que más nos interesan y trataremos que en esta selección no haya tantos datos faltantes.
+
+
+Vamos a comenzar seleccionando los últimos 25 años.
+
+```{r}
+datos2 = datos[datos$year >= 1999,]
+```
+
+```{r}
+numNA = apply(datos2, 1, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos2, 1, function(x) mean(is.na(x))), 2)
+tablaNA3 = data.frame(numNA, percNA)
+barplot(table(tablaNA3$percNA), xlab = "% Valores faltantes", ylab = "Número de casos", main = "datos")
+```
+```{r}
+numNA = apply(datos2, 2, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos2, 2, function(x) mean(is.na(x))), 2)
+tabla2 = data.frame(nombres_columnas, numNA, percNA)
+head(tabla2)
+```
+
+Observamos que con esta primera selección el porcentaje de valores faltantes ha disminuido considerablemente tanto en observaciones como en algunas variables. Como hay observaciones de **`r length(unique(datos2$country))`** países, seguramente muchos de ellos tengan gran parte de sus atributos faltantes por lo que también podríamos hacer una selección de ellos. 
+
+
+```{r}
+# Vector con los 100 países más importantes económicamente (nombres en inglés)
+paises_importantes_ingles <- c("United States", "China", "Japan", "Germany", "India",
+                               "United Kingdom", "France", "Brazil", "Italy", "Canada",
+                               "South Korea", "Russia", "Australia", "Spain", "Mexico",
+                               "Indonesia", "Netherlands", "Switzerland", "Saudi Arabia", "Turkey",
+                               "Taiwan", "Poland", "Sweden", "Belgium", "Argentina",
+                               "Thailand", "Austria", "Iran", "Norway", "United Arab Emirates",
+                               "Nigeria", "Israel", "Malaysia", "Singapore", "Ireland", "South Africa",
+                               "Denmark", "Philippines", "Bangladesh", "Colombia", "Egypt",
+                               "Pakistan", "Vietnam", "Finland", "Chile", "Greece",
+                               "Portugal", "Czech Republic", "Peru", "Hungary", "New Zealand",
+                               "Algeria", "Kazakhstan", "Qatar", "Kuwait", "Ukraine",
+                               "Romania", "Vietnam", "Ecuador", "Oman", "Sri Lanka",
+                               "Kenya", "Guatemala", "Tanzania", "Syria", "Ivory Coast",
+                               "Morocco", "Ethiopia", "Myanmar", "Lithuania", "Latvia",
+                               "Bolivia", "Slovakia", "Slovenia", "Panama", "Uruguay",
+                               "Cuba", "Ghana", "Lebanon", "Croatia", "Serbia", "Yemen",
+                               "Lebanon", "Tunisia", "Turkmenistan", "Uzbekistan", "Bulgaria",
+                               "Dominican Republic", "Bahrain", "Slovenia", "Slovakia",
+                               "Oman", "Luxembourg", "Libya", "Paraguay", "Kosovo")
+
+print(paises_importantes_ingles)
+length(paises_importantes_ingles)
+```
+
+Procedemos ahora a seleccionar esos paises
+
+```{r}
+datos3 = datos2[datos2$country %in% paises_importantes_ingles,]
+```
+
+Nos hemos quedado con **`r length(unique(datos3$country))`** países.
+
+```{r}
+numNA = apply(datos3, 2, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos3, 2, function(x) mean(is.na(x))), 2)
+tabla3 = data.frame(numNA, percNA)
+barplot(table(tabla3[2]), xlab = "% Valores faltantes en columna", ylab = "Número de casos", main = "datos seleccionados")
+```
+
+Vemos que hemos reducido mucho los datos faltantes, pero aún así hay columnas con muchos datos faltantes. Vamos a quedarnos con las que tengan un porcentaje de nulos menor a 20%.
+ 
+```{r}
+n_max = 0.2*nrow(datos3)
+datos_limpios = subset(datos3, select = colSums(is.na(datos3)) <= n_max)
+```
+
+
+```{r}
+print(unique(datos_limpios$country))
+```
+
+Se nos queda un dataframe con **`r nrow(datos_limpios)`** observaciones y **`r ncol(datos_limpios)`** variables.
+
+Veamos ahora que hay bastantes menos valores faltantes.
+
+```{r}
+numNA = apply(datos_limpios, 2, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos_limpios, 2, function(x) mean(is.na(x))), 2)
+tabla_datos_limpios = data.frame(numNA, percNA)
+barplot(table(tabla_datos_limpios[2]), xlab = "% Valores faltantes en columna", ylab = "Número de casos", main = "datos seleccionados")
+```
+
+Observamos que en la mayoría de variables en porcentaje de valores faltantes es inferior al 5%.
+
+```{r}
+numNA = apply(datos_limpios, 1, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos_limpios, 1, function(x) mean(is.na(x))), 2)
+tabla_datos_limpios_por_filas = data.frame(numNA, percNA)
+barplot(table(tabla_datos_limpios_por_filas[2]), xlab = "% Valores faltantes en fila", ylab = "Número de casos", main = "datos seleccionados")
+```
+
+Aquí podemos ver que la gran mayoría de observaciones tienen un porcentaje bajo de valores faltantes.
+
+```{r}
+write.table(datos_limpios, file = "datos_limpios.csv", sep = ";", row.names = FALSE)
+```
+
+
+**A partir de aquí, lo que podemos hacer es sustituir estos valores faltantes usando la librería mice por ejemplo, ya que no son muchos.**
+
+
+```{r}
+datos = subset(datos_limpios, year >= 2000)
+datos = subset(datos_limpios, )
+```
+
+```{r}
+seleccion = grepl('share|per_capita|low_carbon|iso_code|twh|biofuel',names(datos))
+print(seleccion)
+columnas_importantes <- datos[, !seleccion]
+columnas_importantes
+```
+```{r}
+str(columnas_importantes)
+```
+```{r}
+head(columnas_importantes)
+```
+
+Todas las columnas que nos interesa analizar son numéricas, vamos a simplificar dos.
+
+```{r}
+population_entre_millon = columnas_importantes['population']/10^6
+columnas_importantes['population'] = population_entre_millon
+columnas_importantes['gdp'] = columnas_importantes['gdp']/10^9
+```
+
+```{r}
+datos_finales = subset(columnas_importantes, year >= 2000)
+datos_finales
+```
+
+```{r}
+library(mice)
+patrones = md.pattern(datos_finales, rotate.names = TRUE)
+```
+ Vamos a ver ahora los datos faltantes que tenemos.
+ 
+```{r}
+numNA = apply(datos_finales, 1, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos_finales, 1, function(x) mean(is.na(x))), 2)
+tabla_datos_finales_por_filas = data.frame(numNA, percNA)
+barplot(table(tabla_datos_finales_por_filas[2]), xlab = "% Valores faltantes en fila", ylab = "Número de casos", main = "datos seleccionados")
+```
+```{r}
+numNA = apply(datos_finales, 2, function(x) sum(is.na(x)))
+percNA = round(100*apply(datos_finales, 2, function(x) mean(is.na(x))), 2)
+tabla_datos_finales_por_columnas = data.frame(numNA, percNA)
+barplot(table(tabla_datos_finales_por_columnas[2]), xlab = "% Valores faltantes en columna", ylab = "Número de casos", main = "datos seleccionados")
+```
+ Vemos que la mayoría de observaciones casi no tienen datos faltantes y todas las columnas seleccionadas tienen menos de un 20% de faltantes.
+ 
+ 
+```{r}
+datos_finales = mice(datos_finales, m = 5, print = FALSE, method = NULL)
+```
+ 
+```{r}
+datosImp = complete(datos_finales)
+```
+
+```{r}
+valores_faltantes <- colSums(is.na(datosImp))
+
+# Crear un barplot para mostrar el número de valores faltantes por variable
+barplot(valores_faltantes,
+        main = "Número de valores faltantes por variable",
+        ylab = "Número de valores faltantes",
+        col = "blue",
+        las = 2, cex.names = 0.5)
+```
+
+Ya tenemos los datos imputados. Vamos a ver si ha cambiado la distribución.
+
+```{r}
+b = data.frame(cbind(datos_finales[,5], datosImp[,5]))
+boxplot(b, col = c("blue", "red"), names = c("antes", "despues"), main = "Boxplot de dos columnas numéricas")
+```
+
+a es antes y d despues
+```{r}
+par(mfrow = c(2,4))
+for (i in 3:ncol(datos_finales)) {
+  boxplot(data.frame(cbind(datos_finales[,i], datosImp[,i])), col = c("blue", "red"), names = c("a", "d"), main = colnames(datos_finales)[i])
+}
+```
+
+```{r}
+write.table(datosImp, file = "datos_imputados.csv", sep = ";", row.names = FALSE)
+```
+

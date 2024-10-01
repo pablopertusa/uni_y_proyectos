@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AuthTest</string>
+    <string name="facebook_app_id">1022096592944013</string>
+    <string name="fb_login_protocol_scheme">fb1234</string>
+    <string name="facebook_client_token">324e0371ea25f4253574962f1cef852a</string>
+</resources>

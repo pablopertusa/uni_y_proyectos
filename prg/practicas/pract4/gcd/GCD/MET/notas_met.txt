@@ -1,0 +1,3 @@
+gcd
+gcd met
+gcd met notas_met

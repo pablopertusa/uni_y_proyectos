@@ -1,0 +1,3 @@
+gcd
+gcd prg
+gcd prg notas_prg

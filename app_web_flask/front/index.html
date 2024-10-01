@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://127.0.0.1:5001/front/styles.css">
+    <title>Buscador de aplicacion</title>
+</head>
+<body>
+    <div>
+        <h1 class="main_title">Buscador</h1>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Buscar" oninput="buscarAutocompletado()">
+    <div class="autocomplete" id="autocomplete"></div>
+    <button id="searchButton" onclick="buscarAccion()"><img src="http://127.0.0.1:5001/front/images/lupa.png" width="10" height="10" alt="Buscar"></button>
+
+    <script src="http://127.0.0.1:5001/front/script.js"></script>
+</body>
+
+<footer>
+    <p>&copy; 2024 Aplicación de Pablo. Absolutamente todos los derechos reservados.</p>
+</footer>
+
+</html>
